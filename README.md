@@ -18,47 +18,37 @@ Includes a simple chat UI (frontend) and an API route (backend) for handling use
 📦 Tech Stack
 
 Next.js
- (React framework)
+(React framework)
 
 TypeScript
 
 OpenAI API
 
-Vercel
- for deployment
+Vercel for deployment
 
 🛠️ Setup
 
 Clone the repo
 
+```
 git clone https://github.com/YOUR-USERNAME/chat-ui-api.git
 cd chat-ui-api
-
+```
 
 Install dependencies
 
+```
 npm install
-
+```
 
 Create .env.local file and add your API key:
 
 OPENAI_API_KEY=your_api_key_here
 
-
 Run the development server
 
+```
 npm run dev
+```
 
-
-Open http://localhost:3000
- in your browser.
-
-📌 Next Steps
-
- Build minimal chat UI
-
- Implement API route
-
- Connect frontend to backend
-
- Deploy to Vercel
+Open http://localhost:3000 in your browser.
