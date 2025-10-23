@@ -1,0 +1,16 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Chat bubble background -->
+  <path d="M6 4C4.89543 4 4 4.89543 4 6V18C4 19.1046 4.89543 20 6 20H8V24L12 20H26C27.1046 20 28 19.1046 28 18V6C28 4.89543 27.1046 4 26 4H6Z" fill="#3B82F6"/>
+  
+  <!-- Chat bubble tail -->
+  <path d="M8 20L4 24V20H8Z" fill="#3B82F6"/>
+  
+  <!-- Three dots to represent messages -->
+  <circle cx="10" cy="10" r="1.5" fill="white"/>
+  <circle cx="16" cy="10" r="1.5" fill="white"/>
+  <circle cx="22" cy="10" r="1.5" fill="white"/>
+  
+  <!-- Message lines -->
+  <rect x="9" y="13" width="8" height="1" rx="0.5" fill="white"/>
+  <rect x="9" y="15" width="12" height="1" rx="0.5" fill="white"/>
+</svg>

@@ -16,6 +16,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Chat App",
   description: "A minimal fullstack chat application",
+  icons: {
+    icon: [
+      { url: "/favicon-v2.svg", type: "image/svg+xml" },
+      { url: "/favicon-v2.svg", sizes: "any" },
+    ],
+  },
 };
 
 const RootLayout = ({
