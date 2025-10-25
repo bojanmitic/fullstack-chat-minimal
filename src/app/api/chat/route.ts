@@ -7,10 +7,6 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
   try {
-    // Debug logging
-    console.log("API Key exists:", !!process.env.OPENAI_API_KEY);
-    console.log("API Key length:", process.env.OPENAI_API_KEY?.length || 0);
-
     const { message } = await request.json();
 
     if (!message) {
