@@ -16,10 +16,22 @@ export interface ChatState {
 // API request/response types
 export interface ChatRequest {
   message: string;
+  templateId?: string;
+  templateVariables?: Record<string, string | number | boolean>;
+  conversationHistory?: Array<{
+    role: "user" | "assistant";
+    content: string;
+  }>;
 }
 
 export interface ChatResponse {
   response: string;
+  templateId?: string;
+  metadata?: {
+    model: string;
+    tokensUsed?: number;
+    processingTime?: number;
+  };
 }
 
 export interface ChatError {
@@ -33,6 +45,12 @@ export interface UseChatReturn {
   error: string | null;
   sendMessage: (content: string) => Promise<void>;
   clearMessages: () => void;
+  selectedTemplateId?: string;
+  templateVariables: Record<string, string | number | boolean>;
+  updateTemplate: (
+    templateId: string | undefined,
+    variables?: Record<string, string | number | boolean>
+  ) => void;
 }
 
 // Component props types
