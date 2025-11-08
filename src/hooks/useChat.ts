@@ -57,9 +57,6 @@ export const useChat = (): UseChatReturn => {
 
       setMessages((prev) => [...prev, userMessage, assistantMessage]);
     },
-    onError: (error) => {
-      console.error("Failed to send message:", error);
-    },
   });
 
   const sendMessage = useCallback(

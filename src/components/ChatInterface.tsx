@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChatInterfaceProps } from "@/types";
 import { useChat } from "@/hooks/useChat";
+import { useToast } from "@/hooks/useToast";
 import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
 import { TemplateSelector } from "./TemplateSelector";
+import { ToastContainer } from "./ToastContainer";
 
 // Props interface moved above component for better readability
 interface ChatInterfaceComponentProps {
@@ -23,11 +25,21 @@ export const ChatInterface = ({ className = "" }: ChatInterfaceComponentProps) =
     updateTemplate 
   } = useChat();
   
+  const { toasts, showError, removeToast } = useToast();
   const [showTemplates, setShowTemplates] = useState(false);
 
+  // Show toast notification when error occurs
+  useEffect(() => {
+    if (error) {
+      showError(error, 7000); // Show error for 7 seconds
+    }
+  }, [error, showError]);
+
   return (
-    <div className={`h-screen bg-gray-900 flex flex-col overflow-hidden ${className}`}>
-      {/* Full-width Header */}
+    <>
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      <div className={`h-screen bg-gray-900 flex flex-col overflow-hidden ${className}`}>
+        {/* Full-width Header */}
       <div className="bg-gray-800 border-b border-gray-700 px-4 py-3 flex justify-between items-center flex-shrink-0">
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-semibold text-white">Chat App</h1>
@@ -69,19 +81,6 @@ export const ChatInterface = ({ className = "" }: ChatInterfaceComponentProps) =
       {/* Centered Content Area */}
       <div className="flex-1 flex items-center justify-center p-4 pb-0 overflow-hidden">
         <div className="w-full max-w-4xl h-full bg-gray-900 rounded-xl overflow-hidden flex flex-col">
-          {/* Error message */}
-          {error && (
-            <div className="bg-red-900/20 border-l-4 border-red-500 p-4 mx-4 mt-2 flex-shrink-0">
-              <div className="flex">
-                <div className="ml-3">
-                  <p className="text-sm text-red-300">
-                    <strong>Error:</strong> {error}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Messages area */}
           <MessageList messages={messages} isLoading={isLoading} />
         </div>
@@ -93,10 +92,10 @@ export const ChatInterface = ({ className = "" }: ChatInterfaceComponentProps) =
           <ChatInput 
             onSendMessage={sendMessage} 
             isLoading={isLoading}
-            disabled={!!error}
           />
         </div>
       </div>
     </div>
+    </>
   );
 };

@@ -20,7 +20,7 @@ export const ChatInput = ({ onSendMessage, isLoading, disabled = false }: ChatIn
     await onSendMessage(message);
   };
 
-  const handleKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
@@ -33,7 +33,7 @@ export const ChatInput = ({ onSendMessage, isLoading, disabled = false }: ChatIn
         <textarea
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onKeyDown={handleKeyDown}
           placeholder="Type your message... (Press Enter to send, Shift+Enter for new line)"
           className="flex-1 resize-none rounded-lg border border-gray-600 bg-gray-700 text-white placeholder-gray-400 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           rows={1}

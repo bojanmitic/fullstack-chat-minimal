@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import { templateEngine } from "@/lib/templateEngine";
 import { getTemplateById } from "@/lib/templates";
 import { ChatRequest, ChatResponse } from "@/types";
+import { storeMessageEmbedding, querySimilarMessages } from "@/lib/pinecone";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -65,6 +66,60 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Generate embedding for user message to query similar past messages
+    let similarMessages: Array<{
+      content: string;
+      role: "user" | "assistant";
+      score: number;
+    }> = [];
+
+    try {
+      // Generate embedding for the user's message
+      const embeddingResponse = await openai.embeddings.create({
+        model: "text-embedding-3-small",
+        input: message,
+      });
+
+      const userMessageEmbedding = embeddingResponse.data[0]?.embedding;
+
+      if (userMessageEmbedding) {
+        // Query Pinecone for similar past messages (RAG)
+        const similarMessagesResults = await querySimilarMessages(
+          userMessageEmbedding,
+          {
+            topK: 5, // Get top 5 similar messages
+            minScore: 0.7, // Only include messages with similarity score >= 0.7
+          }
+        );
+
+        // Format similar messages for context
+        similarMessages = similarMessagesResults.map((match) => ({
+          content: match.content,
+          role: match.role,
+          score: match.score,
+        }));
+      }
+    } catch (error) {
+      // If Pinecone fails, log but don't block the chat
+      console.error("Pinecone RAG query error:", error);
+      // Continue without RAG context - chat will still work
+    }
+
+    // Build context from similar messages if available
+    if (similarMessages.length > 0) {
+      // Add RAG context as a system message for better formatting
+      const ragContextMessage =
+        "Relevant context from past conversations that might be helpful:\n" +
+        similarMessages
+          .map((msg, idx) => `${idx + 1}. [${msg.role}]: ${msg.content}`)
+          .join("\n");
+
+      messages.push({
+        role: "system",
+        content: ragContextMessage,
+      });
+    }
+
     // Add conversation history
     conversationHistory.forEach((msg) => {
       messages.push({
@@ -86,6 +141,56 @@ export async function POST(request: NextRequest) {
     const reply = completion.choices[0]?.message?.content;
     if (!reply) {
       throw new Error("No reply from model");
+    }
+
+    // Store messages in Pinecone for future RAG (non-blocking)
+    try {
+      const timestamp = new Date().toISOString();
+      const userMessageId = `user-${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2, 11)}`;
+      const assistantMessageId = `assistant-${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2, 11)}`;
+
+      // Generate embeddings for both messages
+      const [userEmbeddingResponse, assistantEmbeddingResponse] =
+        await Promise.all([
+          openai.embeddings.create({
+            model: "text-embedding-3-small",
+            input: message,
+          }),
+          openai.embeddings.create({
+            model: "text-embedding-3-small",
+            input: reply,
+          }),
+        ]);
+
+      const userEmbedding = userEmbeddingResponse.data[0]?.embedding;
+      const assistantEmbedding = assistantEmbeddingResponse.data[0]?.embedding;
+
+      // Store both messages in Pinecone
+      if (userEmbedding) {
+        await storeMessageEmbedding(userMessageId, userEmbedding, {
+          content: message,
+          role: "user",
+          timestamp,
+          messageId: userMessageId,
+        });
+      }
+
+      if (assistantEmbedding) {
+        await storeMessageEmbedding(assistantMessageId, assistantEmbedding, {
+          content: reply,
+          role: "assistant",
+          timestamp,
+          messageId: assistantMessageId,
+        });
+      }
+    } catch (error) {
+      // If Pinecone storage fails, log but don't block the response
+      console.error("Pinecone storage error:", error);
+      // Continue - chat response is still returned
     }
 
     const processingTime = Date.now() - startTime;
