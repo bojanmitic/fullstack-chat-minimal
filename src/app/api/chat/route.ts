@@ -5,9 +5,12 @@ import { getTemplateById } from "@/lib/templates";
 import { ChatRequest, ChatResponse } from "@/types";
 import { storeMessageEmbedding, querySimilarMessages } from "@/lib/pinecone";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy initialization - only create client when needed (not during build)
+const getOpenAIClient = () => {
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+};
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
@@ -75,6 +78,7 @@ export async function POST(request: NextRequest) {
 
     try {
       // Generate embedding for the user's message
+      const openai = getOpenAIClient();
       const embeddingResponse = await openai.embeddings.create({
         model: "text-embedding-3-small",
         input: message,
@@ -131,6 +135,7 @@ export async function POST(request: NextRequest) {
     // Add current user message
     messages.push({ role: "user", content: message });
 
+    const openai = getOpenAIClient();
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages,
@@ -154,6 +159,7 @@ export async function POST(request: NextRequest) {
         .slice(2, 11)}`;
 
       // Generate embeddings for both messages
+      const openai = getOpenAIClient();
       const [userEmbeddingResponse, assistantEmbeddingResponse] =
         await Promise.all([
           openai.embeddings.create({
