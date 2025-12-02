@@ -1,6 +1,7 @@
 "use client";
 import { useState, KeyboardEvent } from "react";
 import { ChatInputProps } from "@/types";
+import { Spinner } from "./Spinner";
 
 // Props interface moved above component for better readability
 interface ChatInputComponentProps {
@@ -60,10 +61,7 @@ export const ChatInput = ({ onSendMessage, isLoading, disabled = false }: ChatIn
           {/* Button content */}
           <div className="relative flex items-center justify-center space-x-2">
             {isLoading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Sending...</span>
-              </>
+              <Spinner size="sm" className="border-white border-t-transparent" />
             ) : (
               <>
                 <svg 

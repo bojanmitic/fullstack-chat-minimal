@@ -45,7 +45,6 @@ export async function POST(request: NextRequest) {
           );
           messages.push({ role: "system", content: templateResult.content });
         } catch (error) {
-          console.error("Template rendering error:", error);
           return NextResponse.json(
             {
               error: `Template error: ${
@@ -103,10 +102,8 @@ export async function POST(request: NextRequest) {
           score: match.score,
         }));
       }
-    } catch (error) {
-      // If Pinecone fails, log but don't block the chat
-      console.error("Pinecone RAG query error:", error);
-      // Continue without RAG context - chat will still work
+    } catch {
+      // If Pinecone fails, continue without RAG context - chat will still work
     }
 
     // Build context from similar messages if available
@@ -193,10 +190,8 @@ export async function POST(request: NextRequest) {
           messageId: assistantMessageId,
         });
       }
-    } catch (error) {
-      // If Pinecone storage fails, log but don't block the response
-      console.error("Pinecone storage error:", error);
-      // Continue - chat response is still returned
+    } catch {
+      // If Pinecone storage fails, continue - chat response is still returned
     }
 
     const processingTime = Date.now() - startTime;
@@ -211,8 +206,7 @@ export async function POST(request: NextRequest) {
     };
 
     return NextResponse.json(response);
-  } catch (err: unknown) {
-    console.error("OpenAI error:", err);
+  } catch {
     return NextResponse.json(
       { error: "Error communicating with OpenAI API." },
       { status: 500 }

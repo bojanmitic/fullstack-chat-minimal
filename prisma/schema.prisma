@@ -17,10 +17,13 @@ model User {
   name          String?
   emailVerified DateTime?
   image         String?
+  password      String?       // Hashed password (for email/password auth)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   
   // Relationships
+  accounts      Account[]
+  sessions      Session[]
   conversations Conversation[]
   
   @@map("users")
@@ -57,4 +60,48 @@ model Message {
   @@index([conversationId])
   @@index([timestamp])
   @@map("messages")
+}
+
+// Account model - links OAuth providers to users (NextAuth requirement)
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+// Session model - for database sessions (optional, we use JWT but NextAuth adapter may need it)
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+// VerificationToken model - for email verification and password reset
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
 }
