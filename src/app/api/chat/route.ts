@@ -5,12 +5,9 @@ import { getTemplateById } from "@/lib/templates";
 import { ChatRequest, ChatResponse } from "@/types";
 import { storeMessageEmbedding, querySimilarMessages } from "@/lib/pinecone";
 
-// Lazy initialization - only create client when needed (not during build)
-const getOpenAIClient = () => {
-  return new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-};
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY,
+});
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
