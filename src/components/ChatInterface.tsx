@@ -12,6 +12,7 @@ import { ChatInput } from "./ChatInput";
 import { TemplateSelector } from "./TemplateSelector";
 import { ToastContainer } from "./ToastContainer";
 import { Spinner } from "./Spinner";
+import { UsageStats } from "./UsageStats";
 
 // Props interface moved above component for better readability
 interface ChatInterfaceComponentProps {
@@ -34,10 +35,32 @@ export const ChatInterface = ({ className = "" }: ChatInterfaceComponentProps) =
   const { toasts, showError, removeToast } = useToast();
   const [showTemplates, setShowTemplates] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [refreshUsage, setRefreshUsage] = useState(0);
+  const [previousIsLoading, setPreviousIsLoading] = useState(false);
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: "/login" });
   };
+
+  // Refresh usage stats when request starts (immediate feedback)
+  useEffect(() => {
+    if (isLoading && !previousIsLoading) {
+      // Request just started - refresh immediately to show current state
+      setRefreshUsage((prev) => prev + 1);
+    }
+    setPreviousIsLoading(isLoading);
+  }, [isLoading, previousIsLoading]);
+
+  // Refresh usage stats after request completes (with delay for cost tracking)
+  useEffect(() => {
+    if (!isLoading && previousIsLoading && messages.length > 0) {
+      // Request just completed - wait a bit for cost tracking to finish
+      const timer = setTimeout(() => {
+        setRefreshUsage((prev) => prev + 1);
+      }, 1500); // Slightly longer delay to ensure all cost tracking is done
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, previousIsLoading, messages.length]);
 
   // Show toast notification when error occurs
   useEffect(() => {
@@ -111,20 +134,25 @@ export const ChatInterface = ({ className = "" }: ChatInterfaceComponentProps) =
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowTemplates(!showTemplates)}
-            className="text-sm text-gray-400 hover:text-gray-200 transition-colors"
-          >
-            {showTemplates ? "Hide" : "Show"} Templates
-          </button>
-          <button
-            onClick={clearMessages}
-            className="text-sm text-gray-400 hover:text-gray-200 transition-colors"
-            disabled={messages.length === 0}
-          >
-            Clear Chat
-          </button>
+        <div className="flex items-center gap-3">
+          {/* Usage Stats */}
+          <UsageStats refreshTrigger={refreshUsage} />
+          
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowTemplates(!showTemplates)}
+              className="text-sm text-gray-400 hover:text-gray-200 transition-colors"
+            >
+              {showTemplates ? "Hide" : "Show"} Templates
+            </button>
+            <button
+              onClick={clearMessages}
+              className="text-sm text-gray-400 hover:text-gray-200 transition-colors"
+              disabled={messages.length === 0}
+            >
+              Clear Chat
+            </button>
+          </div>
           
           {/* User Profile Menu */}
           <div className="relative ml-2">
