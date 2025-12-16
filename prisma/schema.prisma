@@ -12,51 +12,53 @@ datasource db {
 
 // User model - represents authenticated users
 model User {
-  id            String        @id @default(cuid())
-  email         String        @unique
+  id            String    @id @default(cuid())
+  email         String    @unique
   name          String?
   emailVerified DateTime?
   image         String?
-  password      String?       // Hashed password (for email/password auth)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  
+  password      String? // Hashed password (for email/password auth)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
   // Relationships
   accounts      Account[]
   sessions      Session[]
   conversations Conversation[]
-  
+  apiUsage      ApiUsage[]
+  costLimit     UserCostLimit?
+
   @@map("users")
 }
 
 // Conversation model - represents chat conversations
 model Conversation {
   id        String   @id @default(cuid())
-  title     String?  // Optional title for the conversation
-  userId    String   // Foreign key to User
+  title     String? // Optional title for the conversation
+  userId    String // Foreign key to User
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   // Relationships
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages Message[]
-  
+
   @@index([userId])
   @@map("conversations")
 }
 
 // Message model - represents individual messages in a conversation
 model Message {
-  id             String       @id @default(cuid())
-  conversationId String       // Foreign key to Conversation
-  role           String       // "user" or "assistant"
-  content        String       // Message text content
-  timestamp      DateTime     @default(now())
-  createdAt      DateTime     @default(now())
-  
+  id             String   @id @default(cuid())
+  conversationId String // Foreign key to Conversation
+  role           String // "user" or "assistant"
+  content        String // Message text content
+  timestamp      DateTime @default(now())
+  createdAt      DateTime @default(now())
+
   // Relationships
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  
+
   @@index([conversationId])
   @@index([timestamp])
   @@map("messages")
@@ -104,4 +106,70 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+// Enum for API services
+enum ApiService {
+  OPENAI
+  PINECONE
+}
+
+// Enum for API operations
+enum ApiOperation {
+  CHAT_COMPLETION
+  EMBEDDING
+  QUERY
+  UPSERT
+}
+
+// ApiUsage model - tracks API calls and associated costs
+model ApiUsage {
+  id             String  @id @default(cuid())
+  userId         String? // Nullable for anonymous users
+  conversationId String? // Link to conversation if applicable
+
+  // Service details
+  service   ApiService // OPENAI | PINECONE
+  operation ApiOperation // CHAT_COMPLETION | EMBEDDING | QUERY | UPSERT
+  model     String? // e.g., "gpt-3.5-turbo", "text-embedding-3-small"
+
+  // Token usage (for OpenAI)
+  inputTokens  Int?
+  outputTokens Int?
+  totalTokens  Int?
+
+  // Cost tracking
+  estimatedCost Float // In USD
+
+  // Metadata
+  metadata  Json? // Additional context (request ID, error details, etc.)
+  timestamp DateTime @default(now())
+
+  // Relationships
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([timestamp])
+  @@index([service])
+  @@index([conversationId])
+  @@map("api_usage")
+}
+
+// UserCostLimit model - tracks spending limits and current usage per user
+model UserCostLimit {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  dailyLimit       Float    @default(0.045) // $0.045/day default (30 requests/day)
+  monthlyLimit     Float    @default(1.35) // $1.35/month default (30 × daily limit)
+  currentDaily     Float    @default(0.0)
+  currentMonthly   Float    @default(0.0)
+  lastResetDaily   DateTime @default(now())
+  lastResetMonthly DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_cost_limits")
 }
