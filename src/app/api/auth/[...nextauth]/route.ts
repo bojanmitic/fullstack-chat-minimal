@@ -1,8 +1,8 @@
 import NextAuth from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-// Export NextAuth handler
-// The validation in auth.ts will throw an error if NEXTAUTH_SECRET is missing
+// Initialize NextAuth handler
 const handler = NextAuth(authOptions);
 
+// Export handlers - NextAuth handles errors internally
 export { handler as GET, handler as POST };

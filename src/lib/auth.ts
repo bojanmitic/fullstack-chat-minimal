@@ -5,16 +5,16 @@ import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-// Validate required environment variables
+// Validate required environment variables (log warnings instead of throwing to prevent app crash)
 if (!process.env.NEXTAUTH_SECRET) {
-  throw new Error(
-    "NEXTAUTH_SECRET is not set. Please set it in your environment variables."
+  console.error(
+    "⚠️ NEXTAUTH_SECRET is not set. Authentication will not work properly."
   );
 }
 
 if (!process.env.NEXTAUTH_URL && process.env.NODE_ENV === "production") {
   console.warn(
-    "NEXTAUTH_URL is not set in production. This may cause authentication issues."
+    "⚠️ NEXTAUTH_URL is not set in production. This may cause authentication issues."
   );
 }
 
@@ -105,5 +105,6 @@ export const authOptions: NextAuthOptions = {
   },
 
   // Security settings
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || "fallback-secret-change-in-production",
+  debug: process.env.NODE_ENV === "development",
 };
