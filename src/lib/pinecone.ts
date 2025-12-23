@@ -4,6 +4,15 @@ import { Pinecone } from "@pinecone-database/pinecone";
 let pineconeClient: Pinecone | null = null;
 
 /**
+ * Check if Pinecone is configured
+ */
+export const isPineconeConfigured = (): boolean => {
+  const hasApiKey = !!process.env.PINECONE_API_KEY;
+  const hasIndexName = !!process.env.PINECONE_INDEX_NAME;
+  return hasApiKey && hasIndexName;
+};
+
+/**
  * Get or create Pinecone client instance
  */
 export const getPineconeClient = (): Pinecone => {
@@ -50,6 +59,11 @@ export const storeMessageEmbedding = async (
     messageId?: string;
   }
 ) => {
+  // Return early if Pinecone is not configured
+  if (!isPineconeConfigured()) {
+    return;
+  }
+
   try {
     const index = await getPineconeIndex();
 
@@ -86,6 +100,11 @@ export const querySimilarMessages = async (
     minScore?: number;
   } = {}
 ) => {
+  // Return empty array if Pinecone is not configured
+  if (!isPineconeConfigured()) {
+    return [];
+  }
+
   try {
     const index = await getPineconeIndex();
     const topK = options.topK || 5; // Default to 5 similar messages
