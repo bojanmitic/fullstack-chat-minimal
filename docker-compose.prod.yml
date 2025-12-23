@@ -12,7 +12,7 @@ services:
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-chatdb}?schema=public
-      - NEXTAUTH_URL=http://localhost:3001
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3001}
       # API keys and other secrets are loaded from .env.local via env_file above
     depends_on:
       db:
