@@ -14,7 +14,7 @@ try {
     error instanceof Error
       ? error.message
       : "Failed to initialize authentication. Check server logs.";
-  
+
   // Fallback handler that matches NextAuth's signature
   handler = (async (_req: Request) => {
     return NextResponse.json(

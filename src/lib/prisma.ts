@@ -37,9 +37,7 @@ export const prisma =
 if (process.env.NODE_ENV === "production") {
   prisma.$connect().catch((error) => {
     console.error("❌ Failed to connect to database:", error.message);
-    console.error(
-      "💡 Check your DATABASE_URL and RDS security group settings"
-    );
+    console.error("💡 Check your DATABASE_URL and RDS security group settings");
   });
 }
 
