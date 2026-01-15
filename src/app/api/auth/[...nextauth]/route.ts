@@ -10,18 +10,21 @@ try {
 } catch (error) {
   console.error("❌ Failed to initialize NextAuth:", error);
   // Create a fallback handler that returns proper JSON errors
-  handler = (async (req: Request) => {
+  const errorMessage =
+    error instanceof Error
+      ? error.message
+      : "Failed to initialize authentication. Check server logs.";
+  
+  // Fallback handler that matches NextAuth's signature
+  handler = (async (_req: Request) => {
     return NextResponse.json(
       {
         error: "Authentication service unavailable",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Failed to initialize authentication. Check server logs.",
+        message: errorMessage,
       },
       { status: 500 }
     );
-  }) as any;
+  }) as ReturnType<typeof NextAuth>;
 }
 
 // Wrap handlers to catch runtime database errors
