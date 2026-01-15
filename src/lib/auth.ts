@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 
 // Validate required environment variables
 if (!process.env.NEXTAUTH_SECRET) {
+  console.error("❌ NEXTAUTH_SECRET is missing!");
   throw new Error(
     "NEXTAUTH_SECRET is not set. Please set it in your environment variables."
   );
@@ -14,12 +15,22 @@ if (!process.env.NEXTAUTH_SECRET) {
 
 if (!process.env.NEXTAUTH_URL && process.env.NODE_ENV === "production") {
   console.warn(
-    "NEXTAUTH_URL is not set in production. This may cause authentication issues."
+    "⚠️ NEXTAUTH_URL is not set in production. This may cause authentication issues."
   );
+}
+
+// Log configuration status (without exposing secrets)
+if (process.env.NODE_ENV === "production") {
+  console.log("✅ NextAuth configured:", {
+    hasSecret: !!process.env.NEXTAUTH_SECRET,
+    hasUrl: !!process.env.NEXTAUTH_URL,
+    url: process.env.NEXTAUTH_URL,
+  });
 }
 
 export const authOptions: NextAuthOptions = {
   // Use Prisma adapter for database integration
+  // Note: Even with JWT strategy, adapter is used for user management
   adapter: PrismaAdapter(prisma),
 
   // Use JWT for sessions (stateless, no database lookup needed)

@@ -31,7 +31,7 @@ Vercel for deployment
 Clone the repo
 
 ```
-git clone https://github.com/YOUR-USERNAME/chat-ui-api.git
+git clone https://github.com/bojanmitic/chat-ui-api.git
 cd chat-ui-api
 ```
 
