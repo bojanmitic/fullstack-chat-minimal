@@ -1,30 +1,54 @@
 import NextAuth from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { authOptions, validateAuthConfig } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 
-// Export NextAuth handler with error handling
-let handler: ReturnType<typeof NextAuth>;
+// Lazy initialization - handler is created on first request, not at module load
+let handler: ReturnType<typeof NextAuth> | null = null;
+let initError: string | null = null;
 
-try {
-  handler = NextAuth(authOptions);
-  console.log("✅ NextAuth handler initialized successfully");
-} catch (error) {
-  console.error("❌ Failed to initialize NextAuth:", {
-    error: error instanceof Error ? error.message : "Unknown error",
-    stack:
-      process.env.NODE_ENV === "development" && error instanceof Error
-        ? error.stack
-        : undefined,
-  });
-  // Create a fallback handler that returns proper JSON errors
-  const errorMessage =
-    error instanceof Error
-      ? error.message
-      : "Failed to initialize authentication. Check server logs.";
+function getHandler(): ReturnType<typeof NextAuth> {
+  // Return cached handler if already initialized
+  if (handler) {
+    return handler;
+  }
 
-  // Fallback handler that matches NextAuth's signature
-  handler = (async (_req: Request) => {
+  // Return error handler if we already failed
+  if (initError) {
+    return createErrorHandler(initError);
+  }
+
+  // Validate configuration before initializing
+  const validation = validateAuthConfig();
+  if (!validation.valid) {
+    console.error("❌ NextAuth configuration invalid:", validation.error);
+    initError = validation.error || "Invalid configuration";
+    return createErrorHandler(initError);
+  }
+
+  // Try to initialize NextAuth
+  try {
+    handler = NextAuth(authOptions);
+    console.log("✅ NextAuth handler initialized successfully");
+    return handler;
+  } catch (error) {
+    console.error("❌ Failed to initialize NextAuth:", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      stack:
+        process.env.NODE_ENV === "development" && error instanceof Error
+          ? error.stack
+          : undefined,
+    });
+    initError =
+      error instanceof Error
+        ? error.message
+        : "Failed to initialize authentication. Check server logs.";
+    return createErrorHandler(initError);
+  }
+}
+
+function createErrorHandler(errorMessage: string): ReturnType<typeof NextAuth> {
+  return (async (_req: Request) => {
     return NextResponse.json(
       {
         error: "Authentication service unavailable",
@@ -84,7 +108,8 @@ async function ensureJsonResponse(response: Response): Promise<Response> {
 // Wrap handlers to catch runtime database errors
 export async function GET(req: Request) {
   try {
-    const response = await handler(req);
+    const activeHandler = getHandler();
+    const response = await activeHandler(req);
     return await ensureJsonResponse(response);
   } catch (error) {
     console.error("❌ NextAuth GET error:", {
@@ -143,7 +168,8 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const response = await handler(req);
+    const activeHandler = getHandler();
+    const response = await activeHandler(req);
     return await ensureJsonResponse(response);
   } catch (error) {
     console.error("❌ NextAuth POST error:", {
