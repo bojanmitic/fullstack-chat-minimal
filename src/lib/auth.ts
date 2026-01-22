@@ -5,26 +5,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-// Validation function - called lazily, not at module load time
-export function validateAuthConfig(): { valid: boolean; error?: string } {
-  if (!process.env.NEXTAUTH_SECRET) {
-    console.error("❌ NEXTAUTH_SECRET is missing!");
-    return {
-      valid: false,
-      error: "NEXTAUTH_SECRET is not set. Please set it in your environment variables.",
-    };
-  }
-
-  if (!process.env.NEXTAUTH_URL && process.env.NODE_ENV === "production") {
-    console.warn(
-      "⚠️ NEXTAUTH_URL is not set in production. This may cause authentication issues."
-    );
-  }
-
-  return { valid: true };
-}
-
-// Log configuration status at startup (without throwing)
+// Log configuration status at startup
 if (process.env.NODE_ENV === "production") {
   console.log("📋 NextAuth configuration status:", {
     hasSecret: !!process.env.NEXTAUTH_SECRET,
