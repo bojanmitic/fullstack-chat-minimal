@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -10,11 +10,39 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const errorParam = searchParams.get("error");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Map NextAuth error codes to user-friendly messages
+  const getErrorMessage = (errorCode: string | null): string => {
+    if (!errorCode) return "";
+    
+    const errorMessages: Record<string, string> = {
+      OAuthSignin: "Error occurred during Google sign-in. Please check your Google OAuth configuration.",
+      OAuthCallback: "Error occurred in the OAuth callback. Please try again.",
+      OAuthCreateAccount: "Could not create account with Google. Please try again.",
+      EmailCreateAccount: "Could not create account. Please try again.",
+      Callback: "Error occurred during authentication. Please try again.",
+      OAuthAccountNotLinked: "An account with this email already exists. Please sign in with your original method.",
+      EmailSignin: "Check your email for the sign-in link.",
+      CredentialsSignin: "Invalid email or password.",
+      SessionRequired: "Please sign in to access this page.",
+      Default: "An authentication error occurred. Please try again.",
+    };
+
+    return errorMessages[errorCode] || errorMessages.Default;
+  };
+
+  // Set error from URL param on mount
+  useEffect(() => {
+    if (errorParam) {
+      setError(getErrorMessage(errorParam));
+    }
+  }, [errorParam]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();

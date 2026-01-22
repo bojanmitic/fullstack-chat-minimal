@@ -11,7 +11,16 @@ if (process.env.NODE_ENV === "production") {
     hasSecret: !!process.env.NEXTAUTH_SECRET,
     hasUrl: !!process.env.NEXTAUTH_URL,
     url: process.env.NEXTAUTH_URL,
+    hasGoogleClientId: !!process.env.GOOGLE_CLIENT_ID,
+    hasGoogleClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
   });
+}
+
+// Validate Google OAuth configuration
+if (process.env.NODE_ENV === "production") {
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    console.warn("⚠️ Google OAuth credentials are missing. Google sign-in will not work.");
+  }
 }
 
 export const authOptions: NextAuthOptions = {
@@ -67,11 +76,15 @@ export const authOptions: NextAuthOptions = {
       },
     }),
 
-    // Google OAuth Provider
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-    }),
+    // Google OAuth Provider - only add if credentials are configured
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [
+          GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          }),
+        ]
+      : []),
   ],
 
   // Callbacks - customize JWT and session
@@ -92,6 +105,31 @@ export const authOptions: NextAuthOptions = {
         session.user.email = token.email as string;
       }
       return session;
+    },
+
+    async signIn({ user, account }) {
+      // Log OAuth sign-in attempts for debugging
+      if (account?.provider === "google") {
+        console.log("🔐 Google OAuth sign-in attempt:", {
+          userId: user.id,
+          email: user.email,
+          provider: account.provider,
+        });
+      }
+      return true;
+    },
+  },
+
+  // Error handling
+  events: {
+    async signIn({ user, account, isNewUser }) {
+      if (account?.provider === "google") {
+        console.log("✅ Google OAuth sign-in successful:", {
+          userId: user.id,
+          email: user.email,
+          isNewUser,
+        });
+      }
     },
   },
 
