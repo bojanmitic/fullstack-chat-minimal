@@ -5,24 +5,6 @@ import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-// Log configuration status at startup
-if (process.env.NODE_ENV === "production") {
-  console.log("📋 NextAuth configuration status:", {
-    hasSecret: !!process.env.NEXTAUTH_SECRET,
-    hasUrl: !!process.env.NEXTAUTH_URL,
-    url: process.env.NEXTAUTH_URL,
-    hasGoogleClientId: !!process.env.GOOGLE_CLIENT_ID,
-    hasGoogleClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
-  });
-}
-
-// Validate Google OAuth configuration
-if (process.env.NODE_ENV === "production") {
-  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-    console.warn("⚠️ Google OAuth credentials are missing. Google sign-in will not work.");
-  }
-}
-
 export const authOptions: NextAuthOptions = {
   // Use Prisma adapter for database integration
   // Note: Even with JWT strategy, adapter is used for user management
@@ -108,14 +90,6 @@ export const authOptions: NextAuthOptions = {
     },
 
     async signIn({ user, account }) {
-      // Log OAuth sign-in attempts for debugging
-      if (account?.provider === "google") {
-        console.log("🔐 Google OAuth sign-in attempt:", {
-          userId: user.id,
-          email: user.email,
-          provider: account.provider,
-        });
-      }
       return true;
     },
   },
@@ -123,13 +97,7 @@ export const authOptions: NextAuthOptions = {
   // Error handling
   events: {
     async signIn({ user, account, isNewUser }) {
-      if (account?.provider === "google") {
-        console.log("✅ Google OAuth sign-in successful:", {
-          userId: user.id,
-          email: user.email,
-          isNewUser,
-        });
-      }
+      // Sign-in event handler
     },
   },
 

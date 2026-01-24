@@ -79,12 +79,8 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     // Log error with context for debugging
-    console.error("❌ Signup error:", {
+    console.error("Signup error:", {
       error: error instanceof Error ? error.message : "Unknown error",
-      stack:
-        process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.stack
-          : undefined,
       email: email || "unknown",
     });
 
@@ -92,7 +88,6 @@ export async function POST(request: NextRequest) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       // Unique constraint violation (user already exists)
       if (error.code === "P2002") {
-        console.error("⚠️ User already exists:", error.meta);
         return NextResponse.json(
           { error: "User with this email already exists" },
           { status: 409 }
@@ -101,7 +96,6 @@ export async function POST(request: NextRequest) {
 
       // Connection errors
       if (error.code === "P1001" || error.code === "P1000") {
-        console.error("❌ Database connection error:", error.message);
         return NextResponse.json(
           { error: "Database connection error. Please try again later." },
           { status: 503 }
@@ -109,7 +103,6 @@ export async function POST(request: NextRequest) {
       }
 
       // Other Prisma errors
-      console.error("⚠️ Prisma error:", error.code, error.message);
       return NextResponse.json(
         { error: "Database error occurred. Please try again." },
         { status: 500 }
@@ -118,7 +111,6 @@ export async function POST(request: NextRequest) {
 
     // Handle Prisma validation errors
     if (error instanceof Prisma.PrismaClientValidationError) {
-      console.error("⚠️ Prisma validation error:", error.message);
       return NextResponse.json(
         { error: "Invalid data provided. Please check your input." },
         { status: 400 }
@@ -127,7 +119,6 @@ export async function POST(request: NextRequest) {
 
     // Handle JSON parsing errors
     if (error instanceof SyntaxError) {
-      console.error("⚠️ JSON parsing error:", error.message);
       return NextResponse.json(
         { error: "Invalid request format" },
         { status: 400 }
@@ -137,7 +128,6 @@ export async function POST(request: NextRequest) {
     // Generic error handling
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
-    console.error("❌ Unexpected signup error:", errorMessage);
 
     return NextResponse.json(
       {
