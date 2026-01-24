@@ -20,7 +20,7 @@ function LoginForm() {
   // Map NextAuth error codes to user-friendly messages
   const getErrorMessage = (errorCode: string | null): string => {
     if (!errorCode) return "";
-    
+
     const errorMessages: Record<string, string> = {
       OAuthSignin: "Error occurred during Google sign-in. Please check your Google OAuth configuration.",
       OAuthCallback: "Error occurred in the OAuth callback. Please try again.",
