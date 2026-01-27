@@ -88,17 +88,6 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-
-    async signIn({ user, account }) {
-      return true;
-    },
-  },
-
-  // Error handling
-  events: {
-    async signIn({ user, account, isNewUser }) {
-      // Sign-in event handler
-    },
   },
 
   // Pages - customize auth pages (optional)
